@@ -257,10 +257,86 @@ NUMBERS = [
 ]
 
 
+
+def refinery_pictogram(canvas, x, y):
+    """Original 134-by-78 refinery silhouette, drawn only with lines and rectangles.
+
+    Tanks, pipework, fractionating columns and a crimson flare occupy the
+    ragged-right space beside the two shorter lead-headline lines.
+    """
+    def line(ax, ay, bx, by, thickness=1.3, color=INK):
+        canvas.line(x+ax,y+ay,x+bx,y+by,thickness,color)
+    def rect(ax, ay, w, h, color=INK):
+        canvas.rect(x+ax,y+ay,w,h,color)
+
+    # Common ground line and low storage tanks with stepped domed roofs.
+    rect(0,76,134,2)
+    rect(2,58,35,18)
+    rect(5,54,29,4)
+    rect(10,51,19,3)
+    rect(43,63,26,13)
+    rect(46,59,20,4)
+    line(6,63,32,63,1,PAPER)
+    line(6,67,32,67,1,PAPER)
+    # Tall distillation column, service platforms and a slim flare stack.
+    rect(75,30,10,46)
+    rect(77,26,6,4)
+    rect(96,43,8,33)
+    rect(117,24,5,52)
+    for level in (37,49,61):
+        rect(71,level,18,2)
+        line(71,level-3,89,level-3,0.8)
+        line(71,level-3,71,level,0.8)
+        line(89,level-3,89,level,0.8)
+    line(92,35,92,75,1)
+    for level in range(38,74,6):
+        line(89,level,95,level,0.8)
+    # Right-angle overhead pipes join the refinery vessels.
+    line(35,69,43,69,2)
+    line(55,59,55,46,2)
+    line(55,46,75,46,2)
+    line(85,68,99,68,2)
+    line(99,68,99,58,2)
+    line(104,58,119,58,2)
+    # An irregular flame: crimson outline and a paper-colored inner lick.
+    line(119,23,113,17,3,CRIMSON)
+    line(113,17,114,11,3,CRIMSON)
+    line(114,11,120,3,3,CRIMSON)
+    line(120,3,120,12,3,CRIMSON)
+    line(120,12,124,8,3,CRIMSON)
+    line(124,8,127,17,3,CRIMSON)
+    line(127,17,122,23,3,CRIMSON)
+    line(122,23,119,23,3,CRIMSON)
+    line(119,21,120,16,1.3,CRIMSON)
+
+
+def drone_pictogram(canvas, x, y):
+    """Original top-view delta-wing drone; its 126-by-64 box is text-free."""
+    def line(ax, ay, bx, by, thickness=1.5, color=INK):
+        canvas.line(x+ax,y+ay,x+bx,y+by,thickness,color)
+    # Symmetric swept wings, built as thick, tapering line bundles.
+    for offset in range(8):
+        line(63,6+offset,7+offset,49,1.6)
+        line(63,6+offset,119-offset,49,1.6)
+    line(7,49,55,40,3)
+    line(119,49,71,40,3)
+    line(55,40,60,53,3)
+    line(71,40,66,53,3)
+    canvas.rect(x+60,y+14,6,41)
+    line(60,14,63,3,2)
+    line(63,3,66,14,2)
+    # Rear propeller and a restrained crimson hub.
+    line(63,53,63,60,2)
+    line(48,59,78,59,1.8)
+    canvas.rect(x+61,y+57,4,4,CRIMSON)
+    line(63,19,63,37,1,PAPER)
+
+
 def rest_of_page(canvas):
     text(canvas,'MIDDLE EAST - ENERGY',28,157,1.12,weight=0.9,color=CRIMSON)
     for i,line in enumerate(('REFINERY STRUCK,','OIL SURGES','TOWARD $100')):
         text(canvas,line,28,180+i*42,5.0,1.075,weight=3.0,gap=1.15,serif=True)
+    refinery_pictogram(canvas,408,222)
     paragraph(canvas,"Houthi projectile hits Aramco's Jazan plant - tankers strike mines in Hormuz",
               28,311,516,1.34,0.89,15,0.8,italic=True,max_bottom=344)
     paragraph(canvas,LEAD_BODY,28,352,516,1.05,0.85,11.4,0.85,max_bottom=416)
@@ -268,6 +344,7 @@ def rest_of_page(canvas):
     text(canvas,'UKRAINE WAR',577,157,1.12,weight=0.9,color=CRIMSON)
     for i,line in enumerate(('155 DRONES','OVER UKRAINE')):
         text(canvas,line,577,181+i*32,3.5,0.94,weight=2.0,gap=1.3,serif=True)
+    drone_pictogram(canvas,839,175)
     paragraph(canvas,UKRAINE_BODY,577,254,395,1.19,0.94,13.7,0.85,max_bottom=344)
     # A compact boxed wire digest underneath the second story.
     canvas.rect(576,352,396,0.7)
@@ -287,8 +364,14 @@ def rest_of_page(canvas):
         row,col = divmod(i,3)
         x,y = 28+322*col,441+102*row
         text(canvas,section,x,y,1.02,weight=0.9,color=CRIMSON)
-        bottom = paragraph(canvas,headline,x,y+16,300,1.69,0.86,15.5,1.3,max_bottom=y+49)
-        paragraph(canvas,body,x,bottom+7,300,1.0,0.86,10.4,0.8,max_bottom=y+94,gap=1.25)
+        paragraph(canvas,headline,x,y+16,300,1.69,0.86,15.5,1.3,max_bottom=y+49)
+        # Share a body baseline within each row, using its tallest headline.
+        # One-line rows stay compact; the first row reserves two headline lines.
+        row_headlines = STORIES[row*3:row*3+3]
+        headline_lines = max(len(wrap(item[1],300,1.69,0.86))
+                             for item in row_headlines)
+        body_y = y+16+headline_lines*15.5+7
+        paragraph(canvas,body,x,body_y,300,1.0,0.86,10.4,0.8,max_bottom=y+94,gap=1.25)
         if row < 2:
             rule(canvas,y+94,0.5,x,300)
     canvas.rect(339,440,0.5,299)
@@ -307,13 +390,14 @@ def rest_of_page(canvas):
         left = 28+i*944/6
         center = left+944/12
         if i:
-            canvas.rect(left,918,0.5,43)
-        size = min(3.2,141/measure(number,1,0.9))
-        text(canvas,number,center,920,size,0.9,weight=1.6,align='center')
+            canvas.rect(left,919,0.5,44)
+        # Reserve a consistent inset and a four-pixel gap below the figures.
+        size = min(3.1,137/measure(number,1,0.9))
+        text(canvas,number,center,918,size,0.9,weight=1.6,align='center')
         lines = wrap(caption,144,0.89,0.92)
         assert len(lines) <= 2
         for j,line in enumerate(lines):
-            text(canvas,line,center,947+j*10,0.89,0.92,weight=0.8,align='center')
+            text(canvas,line,center,949+j*10,0.89,0.92,weight=0.8,align='center')
     rule(canvas,970,0.7)
     text(canvas,"COMPILED FROM THE DAY'S WIRE REPORTS - FRIDAY 27 NOVEMBER 2026",500,980,0.96,weight=0.65,align='center')
     rule(canvas,994,0.7)
